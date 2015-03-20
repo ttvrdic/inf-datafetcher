@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+
+<link href="lib/css/nv.d3.css" rel="stylesheet" type="text/css">
+<link href="lib/css/teststyle.css" rel="stylesheet" type='text/css'>
+<body>
+  <div class='chart full' id='chart1'><div id="cateLabel"> </div> <p id="countryLabel"> </p><svg></svg></div>
+
+<script src="lib/js/d3.v3.js"></script>
+<script src="lib/js/nv.d3.js"></script>
+<script src="lib/js/src/utils.js"></script>
+<script src="lib/js/src/models/axis.js"></script>
+<script src="lib/js/src/tooltip.js"></script>
+<script src="lib/js/src/interactiveLayer.js"></script>
+<script src="lib/js/src/models/legend.js"></script>
+<script src="lib/js/src/models/axis.js"></script>
+<script src="lib/js/src/models/scatter.js"></script>
+<script src="lib/js/src/models/stackedArea.js"></script>
+<script src="lib/js/src/models/stackedAreaChart.js"></script>
+<script src="lib/js/testScript.js"></script>
+<script src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+<p> &nbsp </p>
+<p><b>Kategorie ausw&#228;hlen:</b></p>
+<select id="CategorySelection">
+  <option selected value="CP">12 Hauptgruppen</option>
+  <option value="NATURAL">4 Hauptaggregate</option>
+  <option value="CP00">Inflationsrate (HVPI)</option>
+  <option value="DIFF">L&#228;ndervergleich</option>
+</select>
+
+<p><b>Periode:</b></p>
+Von &nbsp   
+<select id="TimeFromSelection">
+  <option value="820454400000">1996</option>
+  <option value="852076800000">1997</option>
+  <option value="883612800000">1998</option>
+  <option value="915148800000">1999</option>
+  <option value="946684800000">2000</option>
+  <option value="978307200000">2001</option>
+  <option value="1009843200000">2002</option>
+  <option value="1041379200000">2003</option>
+  <option value="1072915200000">2004</option>
+  <option value="1104537600000">2005</option>
+  <option value="1136073600000">2006</option>
+  <option value="1167609600000">2007</option>
+  <option value="1199145600000">2008</option>
+  <option selected value="1230768000000">2009</option>
+  <option value="1262304000000">2010</option>
+  <option value="1293840000000">2011</option>
+  <option value="1325376000000">2012</option>
+  <option value="1356998400000">2013</option>
+  <option value="1388534400000">2014</option>
+</select>
+&nbsp bis &nbsp
+<select id="TimeToSelection">
+  <option value="820454400000">1996</option>
+  <option value="852076800000">1997</option>
+  <option value="883612800000">1998</option>
+  <option value="915148800000">1999</option>
+  <option value="946684800000">2000</option>
+  <option value="978307200000">2001</option>
+  <option value="1009843200000">2002</option>
+  <option value="1041379200000">2003</option>
+  <option value="1072915200000">2004</option>
+  <option value="1104537600000">2005</option>
+  <option value="1136073600000">2006</option>
+  <option value="1167609600000">2007</option>
+  <option value="1199145600000">2008</option>
+  <option value="1230768000000">2009</option>
+  <option value="1262304000000">2010</option>
+  <option value="1293840000000">2011</option>
+  <option value="1325376000000">2012</option>
+  <option value="1356998400000">2013</option>
+  <option value="1388534400000">2014</option>
+  <option selected value="111388534400000">Neuste</option>
+</select>
+
+<p id="countrySelectionLabel"></p>
+<form id="Country">
+</form>
+
+<div id="Diff">
+<select id="DiffCountry">
+</select>
+
+&nbsp und &nbsp
+
+<select id="DiffCountry2">
+</select>
+
+
+<div>
+<script>
+
+// first build up the radios and dropdowns
+
+$.getJSON("data/config/BarchartConfig", function(countries) {
+	var selectionName = $("#CategorySelection option:selected").val();
+	if(selectionName !== "DIFF"){
+	    $('#Diff').hide();
+	    $('#countrySelectionLabel').html("<b> Land ausw&#228;hlen: </b>");
+	    $.each(countries.Countries, function( index, fullvalue ) {
+		var split = fullvalue.split(';');
+		var value=split[0];
+		var text = split[1];
+		console.log(text)
+		if(value=='AT'){
+			$('<input type="radio" name="Country" checked value="'+value+'">'+text+'</input>').appendTo("#Country");
+		}
+		else{
+			$('<input type="radio" name="Country" value="'+value+'">'+text+'</input>').appendTo("#Country")	
+		}
+	    });
+	}
+	else{
+	    $('#countrySelectionLabel').html("<b> Zu vergleichende L&#228;nder ausw&#228;hlen: </b>");
+	    $('#Diff').show();
+	    $.each(countries.Countries, function( index, fullvalue ) {
+		var split = fullvalue.split(';');
+                var value=split[0];
+                var text = split[1];
+		if(value==='AT'){
+			$('<option selected value="'+value+'">'+text+'</option>').appendTo("#DiffCountry");	
+	    	}
+		else{
+			$('<option value="'+value+'">'+text+'</option>').appendTo("#DiffCountry");
+		}
+		if(value==='EA'){
+			$('<option selected value="'+value+'">'+text+'</option>').appendTo("#DiffCountry2");
+	    	}
+		else{
+			$('<option value="'+value+'">'+text+'</option>').appendTo("#DiffCountry2");
+		}
+	    });
+	}
+
+	var diffSelected = $("#DiffCountry option:selected").val();
+	$('#DiffCountry2 option[value='+diffSelected+']').attr('disabled','disabled');
+	
+	$.each(countries.Categories, function( index, value ) {
+//                $('<option selected value="'+value+'">'+value+'</option>').appendTo("#CategorySelection");
+        });
+
+
+//$('#CategorySelection').prop("disabled", true);
+ $('#countryLabel').html($('#Country input:radio:checked').val());
+var radioName = $('#Country input:radio:checked').val();
+var selectionName = $("#CategorySelection option:selected").val();
+var selectionText = $("#CategorySelection option:selected").text();
+ $('#cateLabel').html(selectionText);
+if(selectionName !== "DIFF"){
+	mainBody("inputData_"+radioName+"_"+selectionName+".json");
+}
+else{
+	mainBody("diff/inputData_ATvsEA_NATURAL.json");
+}
+//var histcatexplong;
+
+$('input:radio').live("change",function (event){
+	radioName = $(this).attr("value");
+	$('#CategorySelection').prop("disabled", false);
+	$('#countryLabel').html(radioName);
+	selectionName=$("#CategorySelection option:selected").val()
+	mainBody("inputData_"+radioName+"_"+selectionName+".json");
+});
+
+$('#CategorySelection').live("change",function (event){
+        selectionName = $(this).attr("value");
+	radioName = $('input:radio:checked').val();
+	/*
+	if(selectionName !== "DIFF"){
+		mainBody("inputData_"+radioName+"_"+selectionName+".json");
+	}
+	else{
+		mainBody("diff/inputData_EAvsAT_NATURAL.json");
+	}*/
+	location.reload();
+});
+
+$('#DiffCountry').live("change",function (event){
+	var diffSelected = $("#DiffCountry option:selected").val();
+	//selectionName = $("#CategorySelectionDiff option:selected").val()
+	$("#DiffCountry2 > option:disabled").each(function() {
+                $('#DiffCountry2 option[value='+this.value+']').removeAttr('disabled',true);
+        });
+	$('#DiffCountry2 option[value='+diffSelected+']').attr('disabled','disabled');	
+	mainBody("diff/inputData_"+$("#DiffCountry option:selected").val()+"vs"+$("#DiffCountry2 option:selected").val()+"_NATURAL.json");
+});
+
+$('#DiffCountry2').live("change",function (event){
+        //selectionName = $("#CategorySelectionDiff option:selected").val()
+        //$('#DiffCountry2 option[value='+diffSelected+']').attr('disabled','disabled');
+        mainBody("diff/inputData_"+$("#DiffCountry option:selected").val()+"vs"+$("#DiffCountry2 option:selected").val()+"_NATURAL.json");
+});
+
+$('#CategorySelectionDiff').live("change",function (event){
+        //selectionName = $("#CategorySelectionDiff option:selected").val()
+        //$('#DiffCountry2 option[value='+diffSelected+']').attr('disabled','disabled');
+        mainBody("diff/inputData_"+$("#DiffCountry option:selected").val()+"vs"+$("#DiffCountry2 option:selected").val()+"_NATURAL.json");
+});
+
+$('#TimeFromSelection').live("change",function (event){
+        var isDiff=""
+	selectionName = $("#CategorySelection option:selected").val()
+	if(selectionName=='DIFF'){
+		isDiff="diff/"
+		selectionName='NATURAL'
+	}
+	radioName = $('input:radio:checked').val();
+	if(typeof radioName=='undefined'){
+		radioName = $("#DiffCountry option:selected").val()+"vs"+$("#DiffCountry2 option:selected").val();
+	}
+	var selectedYear = $('#TimeFromSelection option:selected').text();
+	$("#TimeToSelection > option:disabled").each(function() {
+		$('#TimeToSelection option[value='+this.value+']').removeAttr('disabled',true);
+        });
+	$("#TimeToSelection > option").each(function() {
+    		if(this.text <= selectedYear){
+			$('#TimeToSelection option[value='+this.value+']').attr('disabled','disabled');
+		}
+		if(this.text >= selectedYear){
+			$('#TimeToSelection option[value='+this.value+']').next('option').attr('selected', 'selected');
+		}
+	});	
+        mainBody(isDiff+"inputData_"+radioName+"_"+selectionName+".json");
+});
+
+$('#TimeToSelection').live("change",function (event){
+        var isDiff=""
+	selectionName = $("#CategorySelection option:selected").val()
+        if(selectionName=='DIFF'){
+                isDiff="diff/"
+                selectionName='NATURAL'
+        }
+	radioName = $('input:radio:checked').val();
+        if(typeof radioName=='undefined'){
+                radioName = $("#DiffCountry option:selected").val()+"vs"+$("#DiffCountry2 option:selected").val();
+        }
+	mainBody(isDiff+"inputData_"+radioName+"_"+selectionName+".json");
+});
+
+
+function mainBody (filename){
+$.getJSON("data/"+filename, function(json) {
+  var histcatexplong = json;
+  for(var key in histcatexplong) {
+    for(var k in histcatexplong[key]) {
+	if(k == "values"){
+		var low_cut=0
+		var high_cut=0
+		var counter=0
+		var minValue=$("#TimeFromSelection option:selected").val()
+		var maxValue=$("#TimeToSelection option:selected").val()
+		for (var z in histcatexplong[key][k]){	
+			if(histcatexplong[key][k][low_cut][0]<minValue){
+				//histcatexplong[key][k].splice(0,j);
+				low_cut=++ low_cut;
+			}
+			if(histcatexplong[key][k][counter][0]>maxValue && high_cut==0 ){
+                                //histcatexplong[key][k].splice(0,j);
+                                high_cut=counter;
+			}
+			counter=++ counter;
+		}
+		if(high_cut!=0)
+			histcatexplong[key][k].splice(high_cut,histcatexplong[key][k].length);
+		histcatexplong[key][k].splice(0,low_cut);
+    	}
+    }
+  }
+//var colors = d3.scale.category10();
+
+var colors;
+	colors = d3.scale.ordinal().range([ "#2ca02c", "#ff7f0e", "#1f77b4", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf" ]);;
+
+var keyColor = function(d, i) {return colors(d.key)};
+function defaultChartConfig(container, data, useGuideline) {
+  if (useGuideline === undefined) useGuideline = true;
+  nv.addGraph(function() {
+    var chart;
+    chart = nv.models.stackedAreaChart()
+                  .useInteractiveGuideline(useGuideline)
+                  .x(function(d) { return d[0] })
+                  .y(function(d) { return d[1] })
+                  .color(keyColor)
+                    ;
+	//ttvrdic: explicitely state that the x scale data is a time scale	
+    chart.xScale(d3.time.scale());
+
+	//ttvrdic: set category in the d3js library. 
+	//necessary because of difference in negative values in diff category	
+    d3.setCategory($("#CategorySelection option:selected").val());
+
+    chart.xAxis
+	.ticks(d3.time.months,3) //display data each 3 months
+	.tickFormat(function(d) { return d3.time.format('%m/%Y')(new Date(d)) });
+	
+
+    chart.yAxis
+        .tickFormat(d3.format(',.2f'));
+
+    d3.select('#' + container + ' svg')
+          .datum(data)
+        .transition().duration(500).call(chart);
+
+    nv.utils.windowResize(chart.update);
+
+    return chart;
+  });
+}
+
+defaultChartConfig("chart1", histcatexplong)
+//defaultChartConfig("chart3", histcatexplong_singledatapoint);
+//defaultChartConfig("chart4", histcatexplong_twodatapoint);
+//defaultChartConfig("chart5", histcatexplong_withholes);
+//defaultChartConfig("chart6", totalRandom(), false);
+//defaultChartConfig("chart7", nPoints(),false);
+//defaultChartConfig("chart8", []);
+//defaultChartConfig("chart9", histcatexpshort,true);
+});
+}
+});
+
+
+</script>
